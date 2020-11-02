@@ -64,3 +64,15 @@ on  e.role_id = r.id
 join department as d 
 on r.department_id = d.id
 where d.name = "Engineering";
+
+SELECT  e.id, e.first_name, r.title
+FROM 
+employee AS e
+join role AS r
+on  e.role_id = r.id;
+
+UPDATE role R
+join employee E
+ON E.role_id = R.id
+SET R.title = "Intern"
+WHERE E.id = 1;
