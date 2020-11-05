@@ -26,7 +26,7 @@ connection.connect(function (err) {
     main();
 });
 
-
+// list of prompts to user
 function main() {
 
     inquirer.prompt([
@@ -35,60 +35,61 @@ function main() {
             name: "choice",
             message: "What would you like to do?",
             choices: ["View all Employees", "View employee roles", "View all departments", "View all employees by department", "View all employees by Manager",
-                "Add Employee", "Add Role", "Add departments", "Remove Role", "Remove department", "Remove Employee", "Update Employee Role", "Update Employee Manager", "Total budget by department"]
+                "Add Employee", "Add Role", "Add departments", "Remove Role", "Remove department", "Remove Employee", "Update Employee Role", "Update Employee Manager", "Total budget by department", "quit"]
         }
     ]).then((answers) => {
+        switch (answers.choice) {
+            case "View all Employees": getEmployees();
+                break;
 
-        if (answers.choice === "View all Employees") {
-            getEmployees();
-        }
-        else if (answers.choice === "View employee roles") {
-            getEmployeeRoles();
-        }
-        else if (answers.choice === "View all departments") {
-            getEmployeeDepartments();
-        }
-        else if (answers.choice === "View all employees by department") {
-            getEmployeesByDept();
-        }
-        else if (answers.choice === "View all employees by Manager") {
-            getEmployeesByManager();
-        }
-        else if (answers.choice === "Add Employee") {
-            addEmployee();
-        }
-        else if (answers.choice === "Add Role") {
-            addRole();
-        }
-        else if (answers.choice === "Add departments") {
-            addDepartments();
-        }
-        else if (answers.choice === "Remove Employee") {
-            removeEmployee();
-        }
-        else if (answers.choice === "Remove Role") {
-            removeRole();
-        }
-        else if (answers.choice === "Remove department") {
-            removeDepartment();
-        }
-        else if (answers.choice === "Update Employee Role") {
-            updateEmployeeRole();
-        }
-        else if (answers.choice === "Update Employee Manager") {
-            updateEmployeeManager();
-        }
-        else if (answers.choice === "Total budget by department") {
-            budgetByDept();
+            case "View employee roles": getEmployeeRoles();
+                break;
 
-        }
-        else {
-            connection.end();
+            case "View all departments": getEmployeeDepartments();
+                break;
+
+            case "View all employees by department": getEmployeesByDept();
+                break;
+
+            case "View all employees by Manager": getEmployeesByManager();
+                break;
+
+            case "Add Employee": addEmployee();
+                break;
+
+            case "Add Role": addRole();
+                break;
+
+            case "Add departments": addDepartments();
+                break;
+
+            case "Remove Employee": removeEmployee();
+                break;
+
+            case "Remove Role": removeRole();
+                break;
+
+            case "Remove department": removeDepartment();
+                break;
+
+            case "Update Employee Role": updateEmployeeRole();
+                break;
+
+            case "Update Employee Manager": updateEmployeeManager();
+                break;
+
+            case "Total budget by department": budgetByDept();
+                break;
+
+            case "quit":
+                connection.end();
+                break;
+
         }
     })
-
 }
 
+// to get all the employee details
 function getEmployees() {
     var query = `SELECT  e.id, e.first_name, e.last_name, r.title Role, d.name AS department , r.salary,
     concat( manager.first_name," ",manager.last_name ) Manager
@@ -110,9 +111,9 @@ function getEmployees() {
 
 }
 
+// to get the employee roles
 function getEmployeeRoles() {
-    var query = `select distinct title Role
-    from  role;`
+    var query = "SELECT DISTINCT title Role FROM  role;"
     connection.query(query, function (err, res) {
         if (err) throw err;
         // Log all results of the SELECT statement
@@ -122,9 +123,9 @@ function getEmployeeRoles() {
     });
 }
 
+// to get the employee departments
 function getEmployeeDepartments() {
-    var query = `SELECT distinct name AS department
-    FROM department;`
+    var query = "SELECT distinct name AS department FROM department;"
 
     connection.query(query, function (err, res) {
         if (err) throw err;
@@ -135,9 +136,10 @@ function getEmployeeDepartments() {
     });
 }
 
-
+// to get all the employees from selected department
 function getEmployeesByDept() {
     connection.query("SELECT * FROM department;", function (err, dept) {
+        if (err) throw err;
         inquirer.prompt([
             {
                 type: "list",
@@ -153,9 +155,9 @@ function getEmployeesByDept() {
 
         ]).then((answers) => {
 
-            var query = "SELECT  e.id, e.first_name, e.last_name, r.title, d.name AS department,r.salary, e.manager_id ";
-            query += "FROM employee AS e INNER JOIN role AS r on  e.role_id = r.id INNER JOIN department as d on r.department_id = d.id ";
-            query += "where d.id = ? ";
+            var query = `SELECT  e.id, e.first_name, e.last_name, r.title, d.name AS department, r.salary, e.manager_id
+            FROM employee e INNER JOIN role r on  e.role_id = r.id INNER JOIN department d on r.department_id = d.id
+            where d.id = ?`;
 
             connection.query(query, [answers.deptid], function (err, res) {
                 if (err) throw err;
@@ -168,7 +170,7 @@ function getEmployeesByDept() {
     })
 }
 
-
+// to get all the employees under chosen manager
 function getEmployeesByManager() {
     connection.query(`SELECT  distinct concat(m.first_name," ",m.last_name) Manager, m.id
     FROM employee e, employee m WHERE e.manager_id = m.id;`, function (err, emp) {
@@ -202,6 +204,7 @@ function getEmployeesByManager() {
     })
 }
 
+//to add the employee with all the details
 function addEmployee() {
 
     connection.query("select * from role", function (err, roles) {
@@ -253,7 +256,6 @@ function addEmployee() {
                         first_name: answers.first_name,
                         last_name: answers.last_name,
                         role_id: answers.role,
-                        // manager_id: answers.managerid
                         manager_id: answers.managerid === "None" ? null : answers.managerid
                     },
                     function (err, res) {
@@ -261,7 +263,6 @@ function addEmployee() {
                         console.log(res.affectedRows + " Employee inserted!\n");
                         main();
 
-                        // updateProduct();
                     }
                 );
             })
@@ -269,7 +270,7 @@ function addEmployee() {
     })
 }
 
-
+// to add role into role table
 function addRole() {
     connection.query("select * from department", function (err, dept) {
 
@@ -316,6 +317,7 @@ function addRole() {
     })
 }
 
+//to add department into department table
 function addDepartments() {
     inquirer.prompt([
         {
@@ -339,6 +341,7 @@ function addDepartments() {
     })
 }
 
+// to update employee role 
 function updateEmployeeRole() {
     connection.query("SELECT  e.id, e.first_name, r.title FROM employee AS e join role AS r on  e.role_id = r.id;", function (err, res) {
         if (err) throw err;
@@ -375,7 +378,7 @@ function updateEmployeeRole() {
     })
 }
 
-
+// to update emplpoyee manager
 function updateEmployeeManager() {
     connection.query("SELECT * FROM employee", function (err, res) {
         const employees = res.map(emp => {
@@ -420,6 +423,7 @@ function updateEmployeeManager() {
     })
 }
 
+// to delete a employee 
 function removeEmployee() {
     connection.query("SELECT * FROM employee", function (err, res) {
         if (err) throw err;
@@ -442,8 +446,9 @@ function removeEmployee() {
                 {
                     id: answers.empid
                 },
-                function (err) {
+                function (err, res) {
                     if (err) throw err;
+                    console.table(res);
                     main();
                 }
             );
@@ -451,6 +456,7 @@ function removeEmployee() {
     })
 }
 
+//to delete a role
 function removeRole() {
     connection.query("SELECT * FROM role", function (err, res) {
         if (err) throw err;
@@ -483,7 +489,7 @@ function removeRole() {
     })
 }
 
-
+//to delete a department
 function removeDepartment() {
     connection.query("SELECT * FROM department", function (err, res) {
         if (err) throw err;
@@ -515,9 +521,9 @@ function removeDepartment() {
             );
         })
     })
-
 }
 
+// to find the total budget for chosen department
 function budgetByDept() {
     connection.query("SELECT * FROM department", function (err, res) {
         if (err) throw err;
