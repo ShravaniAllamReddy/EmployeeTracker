@@ -1,5 +1,7 @@
 # EmployeeTracker
 
+![Employee-Tracker](demo.gif)
+
 ## Description
 
 Command-line application that is used for managing company's employees.
@@ -56,3 +58,13 @@ This Application allows the users to
 * [InquirerJs](https://www.npmjs.com/package/inquirer/v/0.2.3) NPM package to interact with the user via the command-line.
 
 * [console.table](https://www.npmjs.com/package/console.table) to print MySQL rows to the console. There is a built-in version of `console.table`, but the NPM package formats the data a little better for our purposes.
+
+
+## Sources Referred
+
+* Self Join: (https://javarevisited.blogspot.com/2020/05/self-join-example-sql-query-to-find-employee-more-than-managers-leetcode-solution.html#axzz6cmE3AZkc)
+
+
+
+
+
