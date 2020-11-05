@@ -155,9 +155,15 @@ function getEmployeesByDept() {
 
         ]).then((answers) => {
 
-            var query = `SELECT  e.id, e.first_name, e.last_name, r.title, d.name AS department, r.salary, e.manager_id
-            FROM employee e INNER JOIN role r on  e.role_id = r.id INNER JOIN department d on r.department_id = d.id
-            where d.id = ?`;
+            var query = `SELECT  e.id, e.first_name, e.last_name, r.title, d.name AS department , r.salary, concat( m.first_name," ",m.last_name ) Manager
+            FROM 
+            employee e
+            left join role r
+            on  e.role_id = r.id
+            left join department d 
+            on r.department_id = d.id
+            left join employee m on e.manager_id = m.id
+            where d.id = ?;`
 
             connection.query(query, [answers.deptid], function (err, res) {
                 if (err) throw err;
@@ -189,9 +195,15 @@ function getEmployeesByManager() {
             }
         ]).then((answers) => {
 
-            var query = "SELECT  e.id, e.first_name, e.last_name, r.title, d.name AS department,r.salary, e.manager_id ";
-            query += "FROM employee AS e INNER JOIN role AS r on  e.role_id = r.id INNER JOIN department as d on r.department_id = d.id ";
-            query += "where e.manager_id = ? ";
+            var query = `SELECT  e.id, e.first_name, e.last_name, r.title, d.name AS department , r.salary, concat( m.first_name," ",m.last_name ) Manager
+            FROM 
+            employee e
+            left join role r
+            on  e.role_id = r.id
+            left join department d 
+            on r.department_id = d.id
+            left join employee m on e.manager_id = m.id
+            where e.manager_id = ?;`
 
             connection.query(query, [answers.managerid], function (err, res) {
                 if (err) throw err;
