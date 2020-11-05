@@ -13,6 +13,16 @@ var connection = mysql.createConnection({
 connection.connect(function (err) {
     if (err) throw err;
     console.log("connected as id" + connection.threadId);
+    console.log(
+
+        " _____                 _ \n" +
+        "| ____|_ __ ___  _ __ | | ___  _   _  ___  ___   _ __ ___   __ _ _ __   __ _  __ _  ___ _ __ \n" +
+        "|  _| | '_ ` _ \\| '_ \\| |/ _ \\| | | |/ _ \\/ _ \\ | '_ ` _ \\ / _` | '_ \\ / _` |/ _` |/ _ \\ '__|\n" +
+        "| |___| | | | | | |_) | | (_) | |_| |  __/  __/ | | | | | | (_| | | | | (_| | (_| |  __/ |   \n" +
+        "|_____|_| |_| |_| .__/|_|\\___/ \\__, |\\___|\\___| |_| |_| |_|\\__,_|_| |_|\\__,_|\\__, |\\___|_|   \n" +
+        "                |_|            |___/                                         |___/           \n"
+
+    )
     main();
 });
 
@@ -80,7 +90,7 @@ function main() {
 }
 
 function getEmployees() {
-    var query = `SELECT  e.id, e.first_name, e.last_name, r.title, d.name AS department , r.salary,
+    var query = `SELECT  e.id, e.first_name, e.last_name, r.title Role, d.name AS department , r.salary,
     concat( manager.first_name," ",manager.last_name ) Manager
     FROM 
     employee e
@@ -101,11 +111,8 @@ function getEmployees() {
 }
 
 function getEmployeeRoles() {
-    var query = `select concat(e.first_name," ",e.last_name) Employee_Name, r.title
-    from 
-    employee e 
-    join role r 
-    on e.role_id = r.id;`
+    var query = `select distinct title Role
+    from  role;`
     connection.query(query, function (err, res) {
         if (err) throw err;
         // Log all results of the SELECT statement
@@ -116,13 +123,8 @@ function getEmployeeRoles() {
 }
 
 function getEmployeeDepartments() {
-    var query = `SELECT  concat(e.first_name," ",e.last_name) Employee_Name, d.name AS department
-    FROM 
-    employee AS e
-    join role AS r
-    on  e.role_id = r.id
-    join department as d 
-    on r.department_id = d.id;`
+    var query = `SELECT distinct name AS department
+    FROM department;`
 
     connection.query(query, function (err, res) {
         if (err) throw err;
@@ -204,9 +206,14 @@ function addEmployee() {
 
     connection.query("select * from role", function (err, roles) {
 
-        connection.query(`SELECT  distinct concat(m.first_name," ",m.last_name) Manager, m.id
-        FROM employee e, employee m WHERE e.manager_id = m.id;`, function (err, emp) {
-
+        connection.query("SELECT * from employee", function (err, emp) {
+            const employees = emp.map(emp => {
+                return {
+                    name: emp.first_name + " " + emp.last_name,
+                    value: emp.id
+                }
+            })
+            employees.push("None");
             inquirer.prompt([
                 {
                     type: "input",
@@ -233,25 +240,21 @@ function addEmployee() {
                     type: "list",
                     name: "managerid",
                     message: "who is the employee's manager",
-                    choices: emp.map(emp => {
-                        return {
-                            name: emp.Manager,
-                            value: emp.manager_id
-                        }
-                    })
+                    choices: employees
+
                 },
 
             ]).then((answers) => {
                 console.log("Inserting a new Employee...\n");
-
+                let managerid = "null";
                 connection.query(
                     "INSERT INTO employee SET ?",
                     {
                         first_name: answers.first_name,
                         last_name: answers.last_name,
                         role_id: answers.role,
-                        manager_id: answers.managerid
-                        // manager_id: answers.managerid.toLowerCase() === "null" ? null : answers.managerid                   
+                        // manager_id: answers.managerid
+                        manager_id: answers.managerid === "None" ? null : answers.managerid
                     },
                     function (err, res) {
                         if (err) throw err;
@@ -265,6 +268,7 @@ function addEmployee() {
         })
     })
 }
+
 
 function addRole() {
     connection.query("select * from department", function (err, dept) {
@@ -374,45 +378,44 @@ function updateEmployeeRole() {
 
 function updateEmployeeManager() {
     connection.query("SELECT * FROM employee", function (err, res) {
-
-        connection.query(`SELECT  distinct concat(m.first_name," ",m.last_name) Manager, m.id
-        FROM employee e, employee m WHERE e.manager_id = m.id;`, function (err, emp) {
-            inquirer.prompt([
-                {
-                    type: "list",
-                    name: "empid",
-                    message: "Which Employee's Manager you would like to update?",
-                    choices: res.map(emp => {
-                        return {
-                            name: emp.first_name + " " + emp.last_name,
-                            value: emp.id
-                        }
-                    })
-
-                },
-                {
-                    type: "input",
-                    name: "manager_id",
-                    message: "Choose one Manager",
-                    choices: emp.map(emp => {
-                        return {
-                            name: emp.Manager,
-                            value: emp.id
-                        }
-                    })
-                }
-            ]).then(answers => {
-                connection.query(
-                    "UPDATE employee e SET e.manager_id = ? WHERE e.id = ? ",
-                    [answers.manager_id, answers.empid],
-                    function (err, res) {
-                        if (err) throw err;
-                        console.table(res);
-                        main();
+        const employees = res.map(emp => {
+            return {
+                name: emp.first_name + " " + emp.last_name,
+                value: emp.id
+            }
+        })
+        employees.push("None");
+        inquirer.prompt([
+            {
+                type: "list",
+                name: "empid",
+                message: "Which employee's manager do you want to update?",
+                choices: res.map(emp => {
+                    return {
+                        name: emp.first_name + " " + emp.last_name,
+                        value: emp.id
                     }
-                )
-            })
+                })
 
+            },
+            {
+                type: "list",
+                name: "managerid",
+                message: "which employee do you want to set as manager for the selected employee?",
+                choices: employees
+
+            }
+        ]).then(answers => {
+
+            connection.query(
+                "UPDATE employee e SET e.manager_id = ? WHERE e.id = ? ",
+                [answers.managerid === "None" ? null : answers.managerid, answers.empid],
+                function (err, res) {
+                    if (err) throw err;
+                    console.table(res);
+                    main();
+                }
+            );
         })
     })
 }
