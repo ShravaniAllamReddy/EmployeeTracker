@@ -113,7 +113,7 @@ function getEmployees() {
 
 // to get the employee roles
 function getEmployeeRoles() {
-    var query = "SELECT DISTINCT title Role FROM  role;"
+    var query = "SELECT DISTINCT(title) Role FROM  role;"
     connection.query(query, function (err, res) {
         if (err) throw err;
         // Log all results of the SELECT statement
@@ -479,7 +479,7 @@ function removeRole() {
                 message: "Which role you would like to delete?",
                 choices: res.map(role => {
                     return {
-                        title: role.title,
+                        name: role.title,
                         value: role.id
                     }
                 })
@@ -491,9 +491,9 @@ function removeRole() {
                 {
                     id: answers.roleid
                 },
-                function (err) {
+                function (err, res) {
                     if (err) throw err;
-
+                    console.table(res);
                     main();
                 }
             );
@@ -525,8 +525,9 @@ function removeDepartment() {
                 {
                     id: answers.deptid
                 },
-                function (err) {
+                function (err, res) {
                     if (err) throw err;
+                    console.table(res);
 
                     main();
                 }
@@ -547,16 +548,16 @@ function budgetByDept() {
                 choices: res.map(dept => {
                     return {
                         name: dept.name,
-                        value: id
+                        value: dept.id
                     }
                 })
             }
 
         ]).then((answers) => {
 
-            var query = "SELECT d.name AS department,SUM(r.salary) as budgetbydept ";
-            query += "FROM employee AS e INNER JOIN role AS r on  e.role_id = r.id INNER JOIN department as d on r.department_id = d.id ";
-            query += "where d.id = ? ";
+            var query = `SELECT d.name AS department,SUM(r.salary) as budgetbydept
+            FROM employee AS e INNER JOIN role AS r on  e.role_id = r.id INNER JOIN department as d on r.department_id = d.id
+            where d.id = ?;`
 
             connection.query(query, [answers.deptid], function (err, res) {
                 if (err) throw err;
